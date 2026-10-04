@@ -4,11 +4,16 @@ let lenis;
 let items = [];
 let wraps = [];
 const marqueeInner = document.querySelector('.mark > .mark__inner'); // Select the inner element of the marquee
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-const preloadImages = (selector = 'img') => {
-  return new Promise((resolve) => {
-    imagesLoaded(document.querySelectorAll(selector), { background: true }, resolve);
-  });
+const preloadImages = (selector) => {
+  return Promise.all(
+    gsap.utils.toArray(selector).map((item) => {
+      const image = new Image();
+      image.src = item.style.backgroundImage.match(/url\(["']?(.*?)["']?\)/)[1];
+      return image.decode().catch(() => {}); // A broken image never blocks the page
+    })
+  );
 };
 
 // --------------------------------
@@ -50,8 +55,9 @@ function createGalleryWrappers() {
 // --------------------------------
 
 function positionGalleryItems() {
-  // Maximum horizontal displacement.
-  const amplitude = window.innerWidth * 0.2;
+  // Maximum horizontal displacement, capped so items stay on screen.
+  const freeSpace = (window.innerWidth - wraps[0].offsetWidth) / 2;
+  const amplitude = Math.min(window.innerWidth * 0.2, freeSpace);
 
   wraps.forEach((wrap, i) => {
     const angle = i * 0.45;
@@ -116,6 +122,7 @@ const animateMarquee = () => {
         start: 'top bottom',
         end: 'bottom top',
         scrub: true,
+        invalidateOnRefresh: true,
       },
     })
     .fromTo(
@@ -135,10 +142,7 @@ const animateMarquee = () => {
 // --------------------------------
 
 function initEvents() {
-  window.addEventListener('resize', () => {
-    positionGalleryItems();
-    ScrollTrigger.refresh();
-  });
+  window.addEventListener('resize', positionGalleryItems);
 }
 
 // ------------------------------------------------------------
@@ -146,12 +150,16 @@ function initEvents() {
 // ------------------------------------------------------------
 
 function init() {
-  initSmoothScrolling();
   createGalleryWrappers();
   positionGalleryItems();
-  initGalleryAnimation();
   animateMarquee();
   initEvents();
+
+  // Keep native scrolling and flat images when reduced motion is preferred.
+  if (reduceMotion) return;
+
+  initSmoothScrolling();
+  initGalleryAnimation();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

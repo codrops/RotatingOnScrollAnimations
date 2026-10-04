@@ -2,13 +2,17 @@ gsap.registerPlugin(ScrollTrigger);
 
 let lenis;
 let items = [];
-let wraps = [];
 const marqueeInner = document.querySelector('.mark > .mark__inner'); // Select the inner element of the marquee
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-const preloadImages = (selector = 'img') => {
-  return new Promise((resolve) => {
-    imagesLoaded(document.querySelectorAll(selector), { background: true }, resolve);
-  });
+const preloadImages = (selector) => {
+  return Promise.all(
+    gsap.utils.toArray(selector).map((item) => {
+      const image = new Image();
+      image.src = item.style.backgroundImage.match(/url\(["']?(.*?)["']?\)/)[1];
+      return image.decode().catch(() => {}); // A broken image never blocks the page
+    })
+  );
 };
 
 // --------------------------------
@@ -41,8 +45,6 @@ function createGalleryWrappers() {
     item.parentNode.insertBefore(wrapper, item);
     wrapper.appendChild(item);
   });
-
-  wraps = gsap.utils.toArray('.gallery__item-wrap');
 }
 
 // --------------------------------
@@ -59,7 +61,6 @@ function initGalleryAnimation() {
       start: 'top bottom+=20%',
       end: 'bottom top-=20%',
       scrub: true,
-      invalidateOnRefresh: true,
 
       onUpdate(self) {
         const progress = self.progress;
@@ -96,6 +97,7 @@ const animateMarquee = () => {
         start: 'top bottom',
         end: 'bottom top',
         scrub: true,
+        invalidateOnRefresh: true,
       },
     })
     .fromTo(
@@ -110,26 +112,19 @@ const animateMarquee = () => {
     );
 };
 
-// --------------------------------
-// Events
-// --------------------------------
-
-function initEvents() {
-  window.addEventListener('resize', () => {
-    ScrollTrigger.refresh();
-  });
-}
-
 // ------------------------------------------------------------
 // INITIALIZATION
 // ------------------------------------------------------------
 
 function init() {
-  initSmoothScrolling();
   createGalleryWrappers();
-  initGalleryAnimation();
   animateMarquee();
-  initEvents();
+
+  // Keep native scrolling and flat images when reduced motion is preferred.
+  if (reduceMotion) return;
+
+  initSmoothScrolling();
+  initGalleryAnimation();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

@@ -14,7 +14,10 @@ Run this demo on a [local server](https://developer.mozilla.org/en-US/docs/Learn
 
 ## Credits
 
-- Add credits here. Inspiration, tools used etc.
+- Inspired by [Jason Booth](https://www.instagram.com/p/DT-snsfDakn/?img_index=1)
+- [GSAP](https://gsap.com/) and [ScrollTrigger](https://gsap.com/docs/v3/Plugins/ScrollTrigger/)
+- [Lenis](https://github.com/darkroomengineering/lenis) for smooth scrolling
+- [three.js](https://threejs.org/) for the WebGL variations (7 to 15)
 
 ## Misc
 
